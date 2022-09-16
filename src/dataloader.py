@@ -5,7 +5,7 @@ import numpy as np
 #     """
 #     Description:
 #     the load_ML1M function when passed the correct directory will return all of the data from the Movie Lens 1M Dataset [http://www.movielens.org/]
-    
+
 #     Parameters:
 #     data_dir=the root directory path of the dataset files
 
@@ -40,13 +40,13 @@ import numpy as np
 def load_ML100K(data_dir):
     """
     Description:
-    the load_ML100k function when passed the correct directory will return all of the data from the Movie Lens 100k Dataset [http://www.movielens.org/]
+        the load_ML100k function when passed the correct directory will return all of the data from the Movie Lens 100k Dataset [http://www.movielens.org/]
 
     Parameters:
-    data_dir=the root directory path of the dataset files
+        data_dir=the root directory path of the dataset files
 
     Returns:
-    a collection of pandas Dataframes (train_ratings,test_ratings,users,movies)
+        a collection of pandas Dataframes (train_ratings,test_ratings,users,movies)
     """
     ratings = pd.read_csv(f'{data_dir}u.data', sep='\t', names=['user_id', 'movie_id', 'rating', 'unix_timestamp'], encoding='latin-1')
     shuffled_ratings = ratings.sample(frac=1).reset_index(drop=True)
@@ -61,7 +61,7 @@ def load_ML100K(data_dir):
     users['user_id'] = users['user_id'] - 1
 
     movies = pd.read_csv(f'{data_dir}u.item', sep="|", encoding='latin-1', header=None, parse_dates=True, 
-                names=['movie_id', 'movie_title' ,'release_date','video_release_date', 'IMDb_URL', 'unknown', 'Action', 
+            names=['movie_id', 'movie_title' ,'release_date','video_release_date', 'IMDb_URL', 'unknown', 'Action', 
                 'Adventure', 'Animation', 'Children\'s', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy', 'Film-Noir', 
                 'Horror', 'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western'])
     movies.movie_id = movies.movie_id.astype(np.int64)

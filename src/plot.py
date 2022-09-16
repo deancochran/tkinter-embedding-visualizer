@@ -1,0 +1,160 @@
+import tkinter as tk
+from tkinter import StringVar, OptionMenu, Button
+import os, sys
+import matplotlib
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
+matplotlib.use('TkAgg')
+import numpy as np
+import pandas as pd
+from sklearn.manifold import TSNE
+from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import LabelBinarizer
+import torch as th
+from torch import nn
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+import tqdm
+from dataloader import load_ML100K
+from dataset import CustomDataset
+from ml100k_pyg_loader import ML100k
+from model import Discriminator
+from utils import get_discrimination_results, entity_vals, feature_vals, encoding_vals, decoding_vals
+device = 'cuda' if th.cuda.is_available() else 'cpu'
+
+class PrEFairApp(tk.Tk):
+    """
+    Description:
+    PreFairApp is a interactive visualization for the PrEFair Project.
+    Parameters:
+    """
+    def __init__(self):
+        super().__init__()
+        self.data_root = '../data'
+        self.init_menu()
+
+    def init_menu(self):
+        """
+        Assumptions that need to be tested:
+        1. The data_root path exists
+        2. Their is at minimum, 1 dataset folder in the data_root directory
+        3. Folder contains and dataset that cane be processed by the utility functions in this repository
+        """
+
+        datasets = os.listdir(self.data_root)
+        self.dataset_var=StringVar(value='Select a Dataset')
+        self.dataset_menu = OptionMenu(self, self.dataset_var,  *datasets, command=self.update_ents)
+        self.dataset_menu.pack()
+
+        self.entity_var=StringVar(value='Select an Entity')
+        self.entity_menu = OptionMenu(self, self.entity_var,  *['None'], command=self.update_feats)
+        self.entity_menu.configure(state='disabled')
+        self.entity_menu.pack()
+
+        self.feature_var=StringVar(value='Select a Feature')
+        self.feature_menu = OptionMenu(self, self.feature_var,  *['None'], command=self.update_encoder)
+        self.feature_menu.configure(state='disabled')
+        self.feature_menu.pack()
+
+        self.encoding_var=StringVar(value='Select an Encoding Method')
+        self.encoding_menu = OptionMenu(self, self.encoding_var,  *['None'], command=self.update_decoder)
+        self.encoding_menu.configure(state='disabled')
+        self.encoding_menu.pack()
+
+        self.decoding_var=StringVar(value='Select an Decoding Method')
+        self.decoding_menu = OptionMenu(self, self.decoding_var,  *['None'], command=self.enable_train)
+        self.decoding_menu.configure(state='disabled')
+        self.decoding_menu.pack()
+
+        self.train_btn = Button(self, text='Train', command=self.train)
+        self.train_btn.configure(state='disabled')
+        self.train_btn.pack()
+
+        self.quit_btn = Button(self, text='Quit',command=self.destroy)
+        self.quit_btn.pack()
+
+    def update_ents(self, dataset_name):
+        if dataset_name != 'Select a Dataset':
+            print(f"{dataset_name}")
+            ent_vals = entity_vals(self.data_root, dataset_name)
+            print(ent_vals)
+            self.entity_menu.configure(state='active')
+
+    def update_feats(self, entity_name):
+        print(f"{entity_name}")
+        dataset_name = self.dataset_var.get()
+        feat_vals = feature_vals(self.data_root, dataset_name, entity_name)
+        print(feat_vals)
+        self.feature_menu.configure(state='active')
+
+    def update_encoder(self, feature_name):
+        print(f"{feature_name}")
+        dataset_name = self.dataset_var.get()
+        enc_vals = encoding_vals(self.data_root, dataset_name)
+        print(enc_vals)
+        self.encoding_menu.configure(state="active")
+
+    def update_decoder(self, encoder_name):
+        print(encoder_name)
+        dataset_name = self.dataset_var.get()
+        dec_vals = decoding_vals(self.data_root, dataset_name)
+        print(dec_vals)
+        self.decoding_menu.configure(state='active')
+
+    def enable_train(self,decoder_name):
+        print(decoder_name)
+        self.train_btn.configure(state="active")
+
+    def train(self):
+        dataset_name = self.dataset_var.get()
+        entity_name = self.entity_var.get()
+        feature_name = self.feature_var.get()
+        encoder_name = self.encoding_var.get()
+        decoder_name = self.decoding_var.get()
+        train_metrics, test_metrics, embeddings, labels, projection = get_discrimination_results(self.data_root, dataset_name, entity_name, feature_name, encoder_name, decoder_name)
+        self.init_fig(train_metrics, test_metrics, embeddings, labels, projection)
+        self.disable()
+
+    def disable(self):
+        self.dataset_menu.configure(state='disabled')
+        self.entity_menu.configure(state='disabled')
+        self.feature_menu.configure(state='disabled')
+        self.encoding_menu.configure(state='disabled')
+        self.decoding_menu.configure(state='disabled')
+        self.train_btn.configure(state='disabled')
+
+    def init_fig(self, train_metrics, test_metrics, embeddings, labels, projection=None):
+        self.figure = Figure(figsize=(6, 4))  # create a figure
+        self.figure_canvas = FigureCanvasTkAgg(self.figure, self)  # create FigureCanvasTkAgg object
+        self.toolbar=NavigationToolbar2Tk(self.figure_canvas, self)  # create the toolbar
+
+        # Embedding plot
+        if projection is not None:
+            ax_emb = self.figure.add_subplot(212, projection=projection)
+            ax_emb.scatter(embeddings[:,0],embeddings[:,1],embeddings[:,2], c=labels)
+        else:
+            ax_emb = self.figure.add_subplot(212)# create axes
+            ax_emb.scatter(embeddings[:,0],embeddings[:,1], c=labels)
+
+        num_epochs = len(train_metrics['loss_vals'])
+        # Training plot
+        ax_train = self.figure.add_subplot(221)
+        ax_train.plot(list(range(num_epochs)), train_metrics['loss_vals'], label='loss')
+        ax_train.plot(list(range(num_epochs)), train_metrics['auc_vals'], label='auc')
+        ax_train.set_ylim(0,1)
+        ax_train.legend()
+
+        # Testing plot
+        ax_test = self.figure.add_subplot(222)
+        ax_test.plot(list(range(num_epochs)), test_metrics['loss_vals'], label='loss')
+        ax_test.plot(list(range(num_epochs)), test_metrics['auc_vals'], label='auc')
+        ax_test.set_ylim(0,1)
+        ax_test.legend()
+        self.figure.suptitle('User Attribute Prediciton with Emeddings:')
+        self.emb_visual = self.figure_canvas.get_tk_widget()
+        self.emb_visual.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+if __name__ == '__main__':
+    app = PrEFairApp()
+    app.mainloop()
