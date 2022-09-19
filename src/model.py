@@ -34,23 +34,23 @@ class Discriminator(nn.Module):
     def forward(self, x):
         return self.activation(self.layers(x)).squeeze()
 
-class Encoder(nn.Module):
-    """
-    This is the Encoder model fr
-    - this is used to provide discriminators with vectorized user embeddings.
-    - the discriminating models then predict a sensitive user attribute given the output embeddings
+# class Encoder(nn.Module):
+#     """
+#     This is the Encoder model fr
+#     - this is used to provide discriminators with vectorized user embeddings.
+#     - the discriminating models then predict a sensitive user attribute given the output embeddings
 
-    Note:
-        this model does not require any additional decoding models. There is already a prebuilt decoder model (SharedBilinearDecoder)
-    """
-    def __init__(self, hidden_dim, num_ent):
-        super(Encoder, self).__init__()
-        self.batchnorm = nn.BatchNorm1d(hidden_dim)
-        r = 6 / np.sqrt(hidden_dim)
-        self.encoder = nn.Embedding(num_ent, hidden_dim)
-        self.encoder.weight.data.uniform_(-r, r).renorm_(p=2, dim=1, maxnorm=1)
+#     Note:
+#         this model does not require any additional decoding models. There is already a prebuilt decoder model (SharedBilinearDecoder)
+#     """
+#     def __init__(self, hidden_dim, num_ent):
+#         super(Encoder, self).__init__()
+#         self.batchnorm = nn.BatchNorm1d(hidden_dim)
+#         r = 6 / np.sqrt(hidden_dim)
+#         self.encoder = nn.Embedding(num_ent, hidden_dim)
+#         self.encoder.weight.data.uniform_(-r, r).renorm_(p=2, dim=1, maxnorm=1)
 
-    def forward(self, nodes, filters=None):
-        embs = self.encoder(nodes)
-        embs = self.batchnorm(embs)
-        return embs
+#     def forward(self, nodes, filters=None):
+#         embs = self.encoder(nodes)
+#         embs = self.batchnorm(embs)
+#         return embs

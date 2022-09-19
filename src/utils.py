@@ -11,23 +11,27 @@ def get_optimizer(name:str, parameters):
 def get_activation(name:str):
     if name == 'sigmoid':
         return nn.Sigmoid()
+    if name == 'softmax':
+        return nn.Softmax()
     else:
         raise Exception(f'Activation function {name} has not been added yet')
 
 def get_criterion(name:str):
     if name == 'BCELoss':
         return nn.BCELoss()
+    if name == 'CELoss':
+        return nn.CrossEntropyLoss()
     else:
         raise Exception(f'Criterion function {name} has not been added yet')
 
-def get_roc_auc(y, y_hat, name:str):
+def get_roc_auc(y, y_hat, name:str=None):
     if name=='multi':
         y = np.asarray(y).squeeze()
         y_hat = np.asarray(y_hat).squeeze()
         lb = LabelBinarizer()
         lb.fit(y)
         y = lb.transform(y)
-        return roc_auc_score(y, y_hat, average='multi')
+        return roc_auc_score(y, y_hat, average='macro',multi_class='ovo')
     else:
         return roc_auc_score(y, y_hat)
 
