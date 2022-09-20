@@ -11,23 +11,7 @@ sys.path.append(parent)
 os.chdir(parent)
 
 # importing from parent
-from src import dataloader
-
-def test_ML1M(ml_1m_path):
-    '''
-    ML-1M tests:
-    - test loading function
-    - test shape of training/testing rating data frames
-    - test shape of user, and item data frames
-    ''' 
-    print('Testing ml-1m')
-    assert os.listdir(ml_1m_path) == ['ratings.dat', 'users.dat', 'README', 'movies.dat']
-    train_ratings,test_ratings,users,movies = dataloader.load_ML1M(ml_1m_path)
-    assert train_ratings.shape == (900188, 3)
-    assert test_ratings.shape == (100021, 3)
-    assert users.shape == (6040, 5)
-    assert movies.shape == (3883, 3)
-
+from src import dataset
 
 def test_ML100K(ml_100k_path):
     '''
@@ -39,7 +23,7 @@ def test_ML100K(ml_100k_path):
     print('Testing ml-100k')
     assert os.listdir(ml_100k_path) == ['u4.test', 'u3.test', 'u3.base', 'ub.base', 'README', 'u2.test', 'ub.test', 'u.occupation', 'u.user', 'u.item', 'ua.test',\
      'u4.base', 'u.data', 'u1.test', 'u1.base', 'allbut.pl', 'u.info', 'mku.sh', 'u.genre', 'u5.base', 'u5.test', 'u2.base', 'ua.base'] 
-    train_ratings,test_ratings,users,movies = dataloader.load_ML100k(ml_100k_path)
+    train_ratings,test_ratings,users,movies = dataset.load_ML100k(ml_100k_path)
 
     assert train_ratings.shape == (90000, 3)
     assert test_ratings.shape == (10000, 3)
@@ -51,13 +35,6 @@ def main(data_dir):
     # ML100K tests
     ml_100k_path=f'{data_dir}ml-100k/raw/ml-100k/'
     test_ML100K(ml_100k_path)
-
-    # ML1M tests
-    # ml_1m_path=f'{data_dir}ml-1m/'
-    # test_ML1M(ml_1m_path)
-    
-    
-
 
 if __name__ == '__main__':
     data_dir='./data/'

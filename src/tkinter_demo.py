@@ -18,11 +18,45 @@ from torch.utils.data import DataLoader
 import tqdm
 from dataloader import load_ML100K
 from dataset import CustomDataset
-from ml100k_pyg_loader import ML100k
+from dataset import ML100k
 from model import Discriminator
 from utils import get_discrimination_results, entity_vals, feature_vals, encoding_vals, decoding_vals
 device = 'cuda' if th.cuda.is_available() else 'cpu'
 
+# ----------------- UTILITY FUNCTIONS FOR AUTOMATED DATASET DISCRIMINATION TESTING-----------------
+    
+    
+def entity_vals(data_dir, dataset_name):
+    print("getting ents for",dataset_name)
+    return ['user','movie']
+
+def feature_vals(data_dir, dataset_name, entity_name):
+    print('getting feats for combination:',dataset_name, entity_name)
+    return ['age','gender','occupation']
+
+def encoding_vals(data_dir, dataset_name):
+    print('encoding vals for ...',dataset_name)
+    return ['metapath2vec','MLP']
+
+def decoding_vals(data_dir, dataset_name):
+    print('decoding vals for ...',dataset_name)
+    return ['MLP','DecisionTreeClassifier']
+
+def get_discrimination_results(data_dir, dataset_name, entity_name, feature_name, encoder_name, decoder_name):
+    print(f'training with dataset:{dataset_name}, entities:{entity_name}, features:{feature_name}, encoder:{encoder_name}, decoder:{decoder_name}')
+    y = np.random.uniform(0,1,1000)
+    x = np.random.uniform(0,1,1000)
+    labels=np.random.randint(0, 2, 1000)
+    emb=np.vstack([x,y]).T
+    train_loss = np.arange(0,1,.01)
+    test_loss = np.arange(0,1,.01)
+    if len(emb[0])>2:
+        return {'loss_vals':train_loss, 'auc_vals':test_loss},{'loss_vals':train_loss, 'auc_vals':test_loss}, emb, labels, '3d'
+    else:
+        return {'loss_vals':train_loss, 'auc_vals':test_loss},{'loss_vals':train_loss, 'auc_vals':test_loss}, emb, labels, None
+
+    
+# ----------------- TKINTER PREFAIR APP -----------------
 class PrEFairApp(tk.Tk):
     """
     Description:
