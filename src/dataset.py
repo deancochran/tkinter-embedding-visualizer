@@ -6,6 +6,13 @@ from torch import LongTensor
 # ----------------- PYTORCH DATASET FOR TRAINING AND TESTING-----------------
 
 class CustomDataset(Dataset):
+    """The CustomDataset is a simple class object. It wraps an array like object to fit
+    the format requirements of pytorch. This class can be fed into a DataLoader object from
+    pytorch to sped up the development of customized training algorithms
+
+    Args:
+        Dataset (_ArrayLike): A collection of samples that will be formatted to uses in pytorch
+    """
     def __init__(self, data_split, prefetch_gpu=False):
         self.prefetch_gpu = prefetch_gpu
         self.dataset = np.ascontiguousarray(data_split)

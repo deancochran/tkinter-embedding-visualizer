@@ -14,6 +14,33 @@ from sklearn.manifold import TSNE
 from torch_geometric.nn import MetaPath2Vec
 
 def get_metapath2vec_embbeddings(edge_index, metapath, device, embedding_dim=64, walk_length=25, context_size=7,walks_per_node=5, num_negative_samples=5,sparse=True, batch_size=128, shuffle=True, num_workers=6,lr=0.01, epochs = 25):
+    """
+    Description:
+    get_metapath2vec_embeddings returns a dictionary of embeddings for every unique entity provided in the edge_index parameter. 
+    These embeddings are separated by the entity type and sorted by their index value, st. embeddings['user'][0] returns a vectorized representation of user#0
+    
+    Arguments:
+    edge_index (dict) - a mapping of source to destination node connections. For every key (relation), there is a value (tuple of tensor indices) 
+    that represent the edges in a particular graph
+    metapath (array) - an array of keys in the format [(src,rel,dst),...]
+    device (str) - the gpu device specification if available
+    embedding_dim (int) - size of returned embeddings
+    
+    Metapath2vec Hyperparameters:
+    walk_length
+    context_size
+    walks_per_node
+    num_neg_samples
+    sparse
+    batch_size
+    shuffle
+    num_workers
+    lr (learning rate)
+    epochs
+    
+    Returns:
+    dict() with embeddings for every node type represented in a graph
+    """
     metapath2vec = MetaPath2Vec(edge_index, embedding_dim, metapath, walk_length, context_size, walks_per_node, num_negative_samples, sparse=True).to(device)
     loader = metapath2vec.loader(batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     optimizer = torch.optim.SparseAdam(list(metapath2vec.parameters()), lr)
@@ -28,12 +55,36 @@ def get_metapath2vec_embbeddings(edge_index, metapath, device, embedding_dim=64,
     return {node_type: metapath2vec(node_type).detach().cpu() for node_type in metapath2vec.num_nodes_dict}
 
 def get_tsne_emb(embeddings, n_components=2, init='random', perplexity=5, return_tensor=False):
+    """
+    Description:
+    get_tsne_emb decomposes high dimensional vectors into a 2 or 3 dimensional space to preform visualizations. 
+    The resulting embeddings should not be utilized for down stream prediction as they are not explainable. 
+    
+    Alternatives include UMAP, PacMAP, etc..
+
+    Args:
+        embeddings (tensor): a tensor of embeddings 
+        n_components (int, optional): indication of return dimensions. Defaults to 2.
+        init (str, optional): hyperparameter of tsne from sklearn. Defaults to 'random'.
+        perplexity (int, optional): hyperparameter of tsne. Defaults to 5.
+        return_tensor (bool, optional): indication to return numpy array or tensor object. Defaults to False.
+
+    Returns:
+        tensor or numpy object: decomposed embeddings
+    """
     if return_tensor:
         return torch.tensor(TSNE(n_components=n_components, init=init, perplexity=perplexity).fit_transform(embeddings))
     else:
         return TSNE(n_components=n_components, init=init, perplexity=perplexity).fit_transform(embeddings)
 
 def rf_discriminator_test(X,y):
+    """rf_discriminator_test preforms a trivial random forest classification test
+    for the provided features and labels
+
+    Args:
+        X (numpy array): These are the array of features that will be used for training/testing
+        y (numpy array): These are the array of labels that will be used for training/testing
+    """
 
     # splitting X, y into train and test data
     X_train, X_test, y_train, y_test = train_test_split(X, y,test_size=.2)
@@ -185,11 +236,35 @@ def analyze_sensitive_attr_distributions(data: pd.DataFrame, distribution_attr_l
     return results
 
 def get_optimizer(name:str, parameters):
+    """get_optimizer is a pytorch utility function to limit the need to import torch.nn
+
+    Args:
+        name (str): the string indicator of the torch optimizer
+        parameters (_type_): the model parameters to be fed into the optimizer
+
+    Raises:
+        Exception: If str identifier is not available
+
+    Returns:
+        torch.nn.optim object: the optimizer used for training 
+    """
     if name == "adam":
         return torch.optim.Adam(params=parameters)
     else:
         raise Exception(f'Optimizer {name} has not been added yet')
+    
 def get_activation(name:str):
+    """get_activation is a pytorch utility function to limit the need to import torch.nn
+
+    Args:
+        name (str): a str identifier for a particular activation function
+
+    Raises:
+        Exception: If string identifier does not exist
+
+    Returns:
+        torch.nn object: The activation function for model prediction
+    """
     if name == 'sigmoid':
         return nn.Sigmoid()
     if name == 'softmax':
@@ -198,6 +273,17 @@ def get_activation(name:str):
         raise Exception(f'Activation function {name} has not been added yet')
 
 def get_criterion(name:str):
+    """get_criterion is a pytorch utility function to limit the need to import torch.nn
+
+    Args:
+        name (str): a str identifier for a particular loss function
+
+    Raises:
+        Exception: If string identifier does not exist
+
+    Returns:
+        torch.nn object: The loss function for model prediction
+    """
     if name == 'BCELoss':
         return nn.BCELoss()
     if name == 'CELoss':
@@ -207,6 +293,16 @@ def get_criterion(name:str):
 
     
 def get_roc_auc(y, y_hat, name:str=None):
+    """get_roc_auc is an automated method to prevent the need of separate roc_auc function calls for binary/multiclass metrics
+
+    Args:
+        y (tensor): the true labels
+        y_hat (tensor): the predicted labels
+        name (str, optional): a string flag to identify with the true values are meant for binary or multiclass metrics. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
     if name=='multi':
         y = np.asarray(y).squeeze()
         y_hat = np.asarray(y_hat).squeeze()
@@ -215,35 +311,20 @@ def get_roc_auc(y, y_hat, name:str=None):
         return roc_auc_score(y, y_hat)
 
 def plot_train_test_embedding(epochs,train_loss_vals,test_loss_vals, train_auc_vals, test_auc_vals, embeddings, embedding_labels):
-    fig = plt.figure(figsize=(10,10))
-    train_ax = plt.subplot(221)
-    train_ax.plot(list(range(epochs)), train_loss_vals, label='loss')
-    train_ax.plot(list(range(epochs)), train_auc_vals, label='auc')
-    train_ax.set_ylim(0,1)
-    train_ax.legend()
+    """plot_train_test_embedding is a function that takes the results of a generic pytorch training algorithm and plots the:
+    - training results
+    - testing results
+    - and the corresponding embeddings that were used for training/testing the model
 
-    test_ax = plt.subplot(222)
-    test_ax.plot(list(range(epochs)), test_loss_vals, label='loss')
-    test_ax.plot(list(range(epochs)), test_auc_vals, label='auc')
-    test_ax.set_ylim(0,1)
-    test_ax.legend()
-
-    if embeddings.shape[1] > 2:
-        projection = '3d'
-    else:
-        projection = '2d'
-    # Embedding plot
-    if projection == '3d':
-        ax_emb = plt.subplot(212, projection=projection)
-        ax_emb.scatter(embeddings[:,0],embeddings[:,1],embeddings[:,2], c=embedding_labels)
-    else:
-        ax_emb = plt.subplot(212)# create axes
-        ax_emb.scatter(embeddings[:,0],embeddings[:,1], c=embedding_labels)
-    plt.show()
-    
-    
-    
-def plot_train_test_embedding(epochs,train_loss_vals,test_loss_vals, train_auc_vals, test_auc_vals, embeddings, embedding_labels):
+    Args:
+        epochs (int): length of result samples
+        train_loss_vals (numpy array): loss samples from training
+        test_loss_vals (numpy array): loss samples from testing
+        train_auc_vals (numpy array): accuracy samples from training
+        test_auc_vals (numpy array): accuracy samples from testing
+        embeddings (numpy array): embeddings for training
+        embedding_labels (numpy array): embedding labels
+    """
     fig = plt.figure(figsize=(10,10))
     fig.suptitle('Training/Testing Visual and Entity Embedding Plot')
     train_ax = plt.subplot(221)

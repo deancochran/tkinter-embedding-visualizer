@@ -1,3 +1,24 @@
+"""
+Tkinter Demo:
+This is a demostration of the capabilities that Tkinter can offer users when the specified functions are correctly implemented. This is NOT production ready. 
+This demonstration will load a program that can be interacted with...
+
+Goal:
+To provide a user a visual and interactive way to filter datasets, select there methods for generating embeddings for node types, and then
+receive information on the vulnerabilities of the data used for training/testing a prediction classifier on a sensitive attribute.
+
+Design Improvements to be made:
+Without mentioning the bare aspects of the program here is a list of features that need to be implemented..
+
+- incorporating a refresh function that will restart the program without changing the layout of the program
+- a filtering method to allow the user to make attribute splits on the selected data before training
+- incorperating text labels of the output data used to make the plots
+- incorperating a prgress bar for future encoding/training mehtods that could be selected 
+- preventing automatic resizing of window, it would be simpler to have a fixed ratio of the program
+- possibly removing the matplotlib graph tool bar
+-...
+"""
+
 import tkinter as tk
 from tkinter import StringVar, OptionMenu, Button
 import os, sys
@@ -16,15 +37,15 @@ from torch import nn
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 import tqdm
-from dataloader import load_ML100K
+from dataset import load_ML100K
 from dataset import CustomDataset
-from dataset import ML100k
+from ml100k import ML100k
 from model import Discriminator
-from utils import get_discrimination_results, entity_vals, feature_vals, encoding_vals, decoding_vals
 device = 'cuda' if th.cuda.is_available() else 'cpu'
 
+
+
 # ----------------- UTILITY FUNCTIONS FOR AUTOMATED DATASET DISCRIMINATION TESTING-----------------
-    
     
 def entity_vals(data_dir, dataset_name):
     print("getting ents for",dataset_name)
@@ -78,7 +99,8 @@ class PrEFairApp(tk.Tk):
 
         datasets = os.listdir(self.data_root)
         self.dataset_var=StringVar(value='Select a Dataset')
-        self.dataset_menu = OptionMenu(self, self.dataset_var,  *datasets, command=self.update_ents)
+        
+        self.dataset_menu = OptionMenu(self, self.dataset_var,  *['datasets'], command=self.update_ents)
         self.dataset_menu.pack()
 
         self.entity_var=StringVar(value='Select an Entity')
