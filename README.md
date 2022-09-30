@@ -2,8 +2,6 @@
 
 ![image](./static/fairness.jpg)
 
-Hello, dean here. (September 2022)
-
 Currently, the prefair-fairness pipeline is not complete. I wish whom ever is finishing the pipeline all the best. 
 
 From July-September I was working on the **Bias Assessment** part of the pipeline mentioned in the graphic above. Most of the most recent weeks have been devoted to identifying **feature bias** that is apart in many recommendation datasets. **Feature bias** occurs in a correlated fashion to **unbalanced data.** Much if not all of the code worked on during these past weeks were focused on creating machine learning to identify how vulnerable users information is when given a dataset with unbalanced attributes (indicating possible feature bias).
